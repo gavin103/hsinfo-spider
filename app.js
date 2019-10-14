@@ -2,8 +2,10 @@ const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
 const util = require('util');
+const axios = require('axios');
 const log = require('./utils/log');
-const CONF = require('./config')
+const CONF = require('./config');
+
 const appendFile = util.promisify(fs.appendFile);
 
 const getListByNum = async ({
@@ -78,14 +80,23 @@ const mergeList = ({
     }
 }
 
-const getHsConf = (hsList)=>{
-    log.red(hsList)
+const getHsInfo = (hsList)=>{
+    const option = {
+        url: CONF.infoUrl,
+        method: "post",
+        headers:{ Cookie:`${CONF.cookie.name}=${CONF.cookie.value}` },
+        data: qs.stringify(CONF.infoParams),
+        responseType:'json'
+    }
+    
+    axios(option).then(res=>console.log(res.data))
 }
 
 const craw = async ()=>{
     try {
         //打开浏览器，进入谷歌翻译网页
-        const browser = await puppeteer.launch({headless: false});
+        const browser = await puppeteer.launch({ devtools:false, headless: false });
+
         const importList = await getListByNum({
             browser,
             url:CONF.importUrl,
@@ -102,9 +113,11 @@ const craw = async ()=>{
             exportList,
         })
 
+        log.yellow(JSON.stringify(hsList))
+
         getHsConf(hsList);
 
-        browser.close();
+        // browser.close();
     }catch (e) {
         console.log(e);
     }

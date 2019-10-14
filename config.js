@@ -21,7 +21,7 @@ const importUrl = 'http://erp.tiantaigarment.com/erp/TT_STD_CONF/zh_CN/themef1/2
 
 const cookie = {
     name:'RSESSIONID',
-    value:'2475953486667F7B1D009AA5370AB931',
+    value:'75F3F149F8A974DCA80E97B99918E738',
     domain:'erp.tiantaigarment.com',
     path:'/erp',
     // expires:'2019-10-11T11:15:31.618Z'
@@ -33,6 +33,6 @@ module.exports={
     importUrl,
     exportUrl,
     cookie,
-    // infoUrl:URL_getCghscodeInfo,
-    // infoParams:params_getCghscodeInfo,
+    infoUrl:URL_getCghscodeInfo,
+    infoParams:params_getCghscodeInfo,
 }
