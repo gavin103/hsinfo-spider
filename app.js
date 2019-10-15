@@ -1,6 +1,7 @@
 const puppeteer = require('puppeteer');
 const path = require('path');
 const fs = require('fs');
+const qs = require('qs')
 const util = require('util');
 const axios = require('axios');
 const log = require('./utils/log');
@@ -59,6 +60,8 @@ const getListByNum = async ({
         )
         return resultList;
     });
+    await page.close();
+    log.green('>>>>>> 关闭Tab ...')
     return res;
 }
 
@@ -80,48 +83,63 @@ const mergeList = ({
     }
 }
 
-const getHsInfo = (hsList)=>{
+const getHsInfo = async (cghscode)=>{
     const option = {
         url: CONF.infoUrl,
         method: "post",
         headers:{ Cookie:`${CONF.cookie.name}=${CONF.cookie.value}` },
-        data: qs.stringify(CONF.infoParams),
-        responseType:'json'
+        data: qs.stringify({...CONF.infoParams,cghscode}),
     }
-    
-    axios(option).then(res=>console.log(res.data))
+    const rawInfo = await axios(option).then(res=>JSON.stringify(res.data))
+    const reg = /(1:.+;)/g;
+    const infoArr = reg.exec(rawInfo);
+    return infoArr.length>0?infoArr[0]:''
 }
 
-const craw = async ()=>{
+const craw = async ({
+    minPage,
+    maxPage
+})=>{
     try {
         //打开浏览器，进入谷歌翻译网页
         const browser = await puppeteer.launch({ devtools:false, headless: false });
+        const allHsInfo = [];
 
-        const importList = await getListByNum({
-            browser,
-            url:CONF.importUrl,
-            pageNum:2,
-        })
-        const exportList = await getListByNum({
-            browser,
-            url:CONF.exportUrl,
-            pageNum:2,
-        })
+        for(var i=minPage; i<=maxPage; i++){
 
-        const hsList = mergeList({
-            importList,
-            exportList,
-        })
+            const importList = await getListByNum({
+                browser,
+                url:CONF.importUrl,
+                pageNum:i,
+            })
+            const exportList = await getListByNum({
+                browser,
+                url:CONF.exportUrl,
+                pageNum:i,
+            })
+            const hsList = mergeList({
+                importList,
+                exportList,
+            })
 
-        log.yellow(JSON.stringify(hsList))
+            for(let j = 0; j<hsList.length; j++){
+                hsList[j].declarationElement = await getHsInfo(hsList[j].code)
+                allHsInfo.push(hsList[j])
+            }
 
-        getHsConf(hsList);
-
-        // browser.close();
+            log.yellow('>>>>>>完成页面 '+i)
+        }
+        fs.writeFileSync(`hsinfo-p${minPage}-p${maxPage}.json`,JSON.stringify(await allHsInfo))
+        log.green('>>>>>>done')
+        
+        browser.close();
     }catch (e) {
         console.log(e);
     }
 
 };
 
-craw();
+craw({
+    minPage:1,
+    maxPage:10,
+});
