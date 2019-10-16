@@ -106,7 +106,9 @@ const craw = async ({
 })=>{
     try {
         //打开浏览器，进入谷歌翻译网页
-        const browser = await puppeteer.launch({ devtools:false, headless: false });
+        const browser = await puppeteer.launch({
+            args: ['--no-sandbox', '--disable-setuid-sandbox']
+        });
         const allHsInfo = [];
 
         for(var i=minPage; i<=maxPage; i++){
@@ -136,15 +138,17 @@ const craw = async ({
             log.yellow('>>>>>>完成页面 '+i)
         }
 
-        log.green('>>>>>>done')
+        log.green('>>>>>>完成爬取数据')
         
         browser.close();
 
-        return {
-            minPage,
-            maxPage,
-            data:await allHsInfo
-        }
+        fs.writeFileSync(
+            `hsInfo-p${minPage}-p${maxPage}.json`,
+            JSON.stringify(await allHsInfo)
+        )
+
+        log.green('>>>>>>完成写入数据')
+
     }catch (e) {
         console.log(e);
     }
