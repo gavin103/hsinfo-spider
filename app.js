@@ -106,6 +106,12 @@ const craw = async ({
 })=>{
     try {
         //打开浏览器，进入谷歌翻译网页
+        log.red('................................................')
+        log.red(`.. 开始时间：${Date.now()},`)
+        log.red(`.. 当前COOKIE：${cookie},`)
+        log.red(`.. 页码范围：P${minPage}~${maxPage},`)
+        log.red('................................................')
+        log.blue('')
         const browser = await puppeteer.launch({
             args: ['--no-sandbox', '--disable-setuid-sandbox']
         });
@@ -136,6 +142,7 @@ const craw = async ({
             }
 
             log.yellow('>>>>>>完成页面 '+i)
+            log.blue('................................................')
         }
 
         log.green('>>>>>>完成爬取数据')
@@ -144,7 +151,11 @@ const craw = async ({
 
         fs.writeFileSync(
             `hsInfo-p${minPage}-p${maxPage}.json`,
-            JSON.stringify(await allHsInfo)
+            JSON.stringify({
+                minPage,
+                maxPage,
+                data: await allHsInfo
+            })
         )
 
         log.green('>>>>>>完成写入数据')
@@ -155,10 +166,10 @@ const craw = async ({
 
 };
 
-craw({
-    minPage:1,
-    maxPage:2,
-    cookie:'13B9F97FCB7E90A23336C54F61A9993D',
-});
+// craw({
+//     minPage:1,
+//     maxPage:2,
+//     cookie:'13B9F97FCB7E90A23336C54F61A9993D',
+// });
 
-// module.exports={ craw }
+module.exports={ craw }
