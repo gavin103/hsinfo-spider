@@ -12,10 +12,11 @@ const appendFile = util.promisify(fs.appendFile);
 const getListByNum = async ({
     browser,
     url,
-    pageNum
+    pageNum,
+    cookie
 })=>{
     const page = await browser.newPage();
-    page.setCookie(CONF.cookie)
+    page.setCookie({...CONF.cookie,value:cookie})
     log.green('>>>>>> 发送页面请求 ...')
     log.yellow(url.slice(0,50)+'...')
 
@@ -70,24 +71,26 @@ const mergeList = ({
     exportList,
 })=>{
     if(importList.length === exportList.length){
-        return importList.map((item,index)=>{
+        const hsList = importList.map((item,index)=>{
             item.exportDutyCommon = exportList[index].exportDutyCommon;
             item.exportDutySpecial = exportList[index].exportDutySpecial;
             return item;
         })
+        return hsList || []
     }else{
         throw new Error(`
             importList:${importList.length},
             exportList:${exportList.length}
         `)
+        return []
     }
 }
 
-const getHsInfo = async (cghscode)=>{
+const getHsInfo = async (cghscode,cookie)=>{
     const option = {
         url: CONF.infoUrl,
         method: "post",
-        headers:{ Cookie:`${CONF.cookie.name}=${CONF.cookie.value}` },
+        headers:{ Cookie:`${CONF.cookie.name}=${cookie}` },
         data: qs.stringify({...CONF.infoParams,cghscode}),
     }
     const rawInfo = await axios(option).then(res=>JSON.stringify(res.data))
@@ -98,7 +101,8 @@ const getHsInfo = async (cghscode)=>{
 
 const craw = async ({
     minPage,
-    maxPage
+    maxPage,
+    cookie,
 })=>{
     try {
         //打开浏览器，进入谷歌翻译网页
@@ -111,11 +115,13 @@ const craw = async ({
                 browser,
                 url:CONF.importUrl,
                 pageNum:i,
+                cookie,
             })
             const exportList = await getListByNum({
                 browser,
                 url:CONF.exportUrl,
                 pageNum:i,
+                cookie,
             })
             const hsList = mergeList({
                 importList,
@@ -123,16 +129,22 @@ const craw = async ({
             })
 
             for(let j = 0; j<hsList.length; j++){
-                hsList[j].declarationElement = await getHsInfo(hsList[j].code)
+                hsList[j].declarationElement = await getHsInfo(hsList[j].code,cookie)
                 allHsInfo.push(hsList[j])
             }
 
             log.yellow('>>>>>>完成页面 '+i)
         }
-        fs.writeFileSync(`hsinfo-p${minPage}-p${maxPage}.json`,JSON.stringify(await allHsInfo))
+
         log.green('>>>>>>done')
         
         browser.close();
+
+        return {
+            minPage,
+            maxPage,
+            data:await allHsInfo
+        }
     }catch (e) {
         console.log(e);
     }
@@ -141,5 +153,8 @@ const craw = async ({
 
 craw({
     minPage:1,
-    maxPage:10,
+    maxPage:2,
+    cookie:'13B9F97FCB7E90A23336C54F61A9993D',
 });
+
+// module.exports={ craw }

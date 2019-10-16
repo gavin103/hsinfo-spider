@@ -23,7 +23,7 @@ const saveUrl = 'http://106.13.192.5:9090/customcode/addlist'
 
 const cookie = {
     name:'RSESSIONID',
-    value:'E1E2B93D5C9661F5651D66EFDEA9C6C7',
+    // value:'13B9F97FCB7E90A23336C54F61A9993D',
     domain:'erp.tiantaigarment.com',
     path:'/erp',
     // expires:'2019-10-11T11:15:31.618Z'
